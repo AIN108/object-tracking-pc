@@ -300,6 +300,13 @@ class TFLiteSSD:
               and np.asarray(outs[3]).size == 1):
             boxes, classes, scores = (np.asarray(o) for o in outs[:3])
             num = int(float(np.asarray(outs[3]).reshape(-1)[0]))
+            # 이름 없는 모델은 [boxes, scores, classes, num] 순서일 수도 있다. 위치만 믿지 않고 값으로 확인해,
+            # 점수 자리에 1을 넘는 값(클래스 번호)이 있거나 클래스 자리가 0~1 비정수(점수)이면 둘을 바꾼다.
+            def _is_score_like(a):
+                return bool(np.all((a >= -0.001) & (a <= 1.001)) and not np.allclose(a, np.round(a)))
+
+            if np.any(scores > 1.001) or (_is_score_like(classes) and np.allclose(scores, np.round(scores))):
+                classes, scores = scores, classes
 
         # 3) 그래도 구분할 수 없는 모델은 기존처럼 모양과 값으로 추정한다.
         for arr in outs if boxes is None else []:
