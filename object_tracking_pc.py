@@ -281,7 +281,28 @@ class TFLiteSSD:
 
         boxes = classes = scores = num = None
 
-        for arr in outs:
+        # 1) TFLite_Detection_PostProcess 출력은 이름 끝 번호(:0 생략·:1·:2·:3)가
+        #    boxes·classes·scores·num으로 정해져 있으므로, 이름이 있으면 순서·값과 무관하게 이름으로 고른다.
+        by_index = {}
+        for info, arr in zip(self.output_details, outs):
+            base, _, suffix = str(info.get("name", "")).partition(":")
+            if base.endswith("TFLite_Detection_PostProcess") and suffix in ("", "1", "2", "3"):
+                by_index[int(suffix or 0)] = np.asarray(arr)
+        if {0, 1, 2} <= by_index.keys():
+            boxes = by_index[0].reshape(-1, 4)
+            classes = by_index[1].reshape(-1)
+            scores = by_index[2].reshape(-1)
+            if 3 in by_index:
+                num = int(float(by_index[3].reshape(-1)[0]))
+        # 2) 이름이 없어도 표준 순서·모양([N,4], [N], [N], [1])이면 순서대로 고른다.
+        elif (len(outs) == 4 and np.asarray(outs[0]).ndim == 2 and np.asarray(outs[0]).shape[-1] == 4
+              and np.asarray(outs[1]).shape == np.asarray(outs[2]).shape == (len(np.asarray(outs[0])),)
+              and np.asarray(outs[3]).size == 1):
+            boxes, classes, scores = (np.asarray(o) for o in outs[:3])
+            num = int(float(np.asarray(outs[3]).reshape(-1)[0]))
+
+        # 3) 그래도 구분할 수 없는 모델은 기존처럼 모양과 값으로 추정한다.
+        for arr in outs if boxes is None else []:
             a = np.asarray(arr)
             if a.ndim == 2 and a.shape[-1] == 4:
                 boxes = a
