@@ -10,10 +10,11 @@ echo.
 
 set "PYEXE="
 
+rem Use "if not errorlevel 1": it is evaluated at run time, unlike the errorlevel variable inside a ( ) block.
 where py >nul 2>nul
-if %errorlevel%==0 (
+if not errorlevel 1 (
     py -3.13 -c "import sys" >nul 2>nul
-    if %errorlevel%==0 set "PYEXE=py -3.13"
+    if not errorlevel 1 set "PYEXE=py -3.13"
 )
 
 if not defined PYEXE (
@@ -24,9 +25,9 @@ if not defined PYEXE (
 
 if not defined PYEXE (
     where python >nul 2>nul
-    if %errorlevel%==0 (
+    if not errorlevel 1 (
         python -c "import sys" >nul 2>nul
-        if %errorlevel%==0 set "PYEXE=python"
+        if not errorlevel 1 set "PYEXE=python"
     )
 )
 

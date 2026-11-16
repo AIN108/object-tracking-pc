@@ -9,19 +9,20 @@ echo.
 
 set "PYEXE="
 
+rem Use "if not errorlevel 1": it is evaluated at run time, unlike the errorlevel variable inside a ( ) block.
 rem 1) Prefer Python Launcher if available.
 where py >nul 2>nul
-if %errorlevel%==0 (
+if not errorlevel 1 (
     py -3.13 -c "import sys" >nul 2>nul
-    if %errorlevel%==0 set "PYEXE=py -3.13"
+    if not errorlevel 1 set "PYEXE=py -3.13"
 )
 
 rem 2) Try normal python command, but reject Microsoft Store alias failures.
 if not defined PYEXE (
     where python >nul 2>nul
-    if %errorlevel%==0 (
+    if not errorlevel 1 (
         python -c "import sys" >nul 2>nul
-        if %errorlevel%==0 set "PYEXE=python"
+        if not errorlevel 1 set "PYEXE=python"
     )
 )
 
@@ -56,9 +57,9 @@ if not defined PYEXE (
 
     if not defined PYEXE (
         where py >nul 2>nul
-        if %errorlevel%==0 (
+        if not errorlevel 1 (
             py -3.13 -c "import sys" >nul 2>nul
-            if %errorlevel%==0 set "PYEXE=py -3.13"
+            if not errorlevel 1 set "PYEXE=py -3.13"
         )
     )
 )
