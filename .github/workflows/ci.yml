@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install system libraries for opencv-python
+        run: sudo apt-get update && sudo apt-get install -y libgl1
+      - run: pip install -r requirements-dev.txt
+      - name: Download model and sample video
+        run: python download_assets.py
+      - run: python -m pytest -q
+
+  windows-batch:
+    # install_windows.bat / run_windows.bat의 Python 선택(errorlevel) 로직을 실제 cmd.exe로 검증
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pytest>=8,<10"
+      - run: python -m pytest tests/test_windows_bat.py -v
