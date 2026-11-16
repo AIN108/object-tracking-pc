@@ -481,6 +481,10 @@ def main():
 
     prev_time = time.perf_counter()
     fps_ema = 0.0
+    # 동영상 끝에서는 처음으로 되감아 반복 재생한다. 되감은 뒤에도 연속으로 읽지 못하면
+    # (프레임이 없거나 손상된 파일, 되감기 미지원) 무한 반복 대신 종료한다.
+    max_video_read_failures = 3
+    video_read_failures = 0
 
     try:
         while True:
@@ -488,10 +492,15 @@ def main():
 
             if not ok or frame is None:
                 if args.video:
+                    video_read_failures += 1
+                    if video_read_failures > max_video_read_failures:
+                        print("동영상 프레임을 읽지 못했습니다 (빈 파일이거나 손상되었을 수 있습니다).")
+                        break
                     cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                     continue
                 print("카메라 프레임을 읽지 못했습니다.")
                 break
+            video_read_failures = 0
 
             detections = detector.detect(
                 frame,
